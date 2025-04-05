@@ -1,4 +1,4 @@
-import { useState } from "react";
+/*import { useState } from "react";
 import { useRouter } from "next/router";
 import { authenticateUser } from "@/lib/authenticate";
 import { getFavourites, getHistory } from "@/lib/userData";
@@ -12,19 +12,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [warning, setWarning] = useState(null);
 
-  const [, setFavouritesList] = useAtom(favouritesAtom);
-  const [, setSearchHistory] = useAtom(searchHistoryAtom);
+  const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
+  const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);
 
+  
   async function updateAtoms() {
-    try {
-      console.log("[Login] Updating favourites and history atoms...");
-      const favs = await getFavourites();
-      const history = await getHistory();
-      setFavouritesList(favs);
-      setSearchHistory(history);
-    } catch (err) {
-      console.error("[Login] Failed to update atoms:", err);
-    }
+    console.log("[Login] Updating favourites and history atoms...");
+    setFavouritesList(await getFavourites());
+    setSearchHistory(await getHistory());
   }
 
   const handleSubmit = async (e) => {
@@ -34,7 +29,7 @@ export default function Login() {
       const success = await authenticateUser(user, password);
 
       if (success) {
-        console.log("[Login] Login successful.");
+        console.log("[Login] Login successful. Redirecting to /favourites");
         await updateAtoms();
         router.push("/favourites");
       }
@@ -45,9 +40,10 @@ export default function Login() {
   };
 
   return (
-    <Card bg="light" className="p-4">
+    <Card bg="secondary">
       <Card.Body>
-        <h2 className="mb-4">Login</h2>
+        <br></br>
+        <h2>Login Page</h2>
         {warning && <Alert variant="danger">{warning}</Alert>}
 
         <Form onSubmit={handleSubmit}>
@@ -61,7 +57,7 @@ export default function Login() {
             />
           </Form.Group>
 
-          <Form.Group className="mb-4">
+          <Form.Group className="mb-3">
             <Form.Label>Password</Form.Label>
             <Form.Control
               type="password"
@@ -71,11 +67,66 @@ export default function Login() {
             />
           </Form.Group>
 
-          <Button variant="primary" type="submit" className="w-100">
+          <Button variant="primary" type="submit">
             Login
           </Button>
         </Form>
       </Card.Body>
     </Card>
   );
+}
+*/
+
+import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { isAuthenticated } from '@/lib/authenticate';
+import { useAtom } from 'jotai';
+import { favouritesAtom, searchHistoryAtom } from '@/store';
+import { getFavourites, getHistory } from '@/lib/userData';
+
+const PUBLIC_PATHS = ['/login', '/register'];
+
+export default function RouteGuard({ children }) {
+  const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
+  const [, setFavouritesList] = useAtom(favouritesAtom);
+  const [, setSearchHistory] = useAtom(searchHistoryAtom);
+
+  async function updateAtoms() {
+    try {
+      const favs = await getFavourites();
+      const history = await getHistory();
+      setFavouritesList(favs);
+      setSearchHistory(history);
+    } catch (err) {
+      console.error('[RouteGuard] Failed to update atoms:', err);
+    }
+  }
+
+  async function checkAuth(url) {
+    const path = url.split('?')[0];
+    const isPublic = PUBLIC_PATHS.includes(path);
+
+    if (!isAuthenticated() && !isPublic) {
+      console.log('[RouteGuard] Not authenticated. Redirecting to /login');
+      setAuthorized(false);
+      router.push('/login');
+    } else {
+      if (isAuthenticated()) {
+        await updateAtoms();
+      }
+      setAuthorized(true);
+    }
+  }
+
+  useEffect(() => {
+    checkAuth(router.asPath);
+
+    router.events.on('routeChangeComplete', checkAuth);
+    return () => {
+      router.events.off('routeChangeComplete', checkAuth);
+    };
+  }, []);
+
+  return authorized || PUBLIC_PATHS.includes(router.pathname) ? children : null;
 }

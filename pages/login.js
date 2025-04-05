@@ -35,6 +35,7 @@ export default function Login() {
   return (
     <div className="container">
       <div className="card">
+        <br></br>
         <h2>Login Page</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">

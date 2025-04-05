@@ -30,6 +30,7 @@ export default function Register() {
   return (
     <div className="container">
       <div className="card">
+        <br></br>
         <h2>Register Page</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">

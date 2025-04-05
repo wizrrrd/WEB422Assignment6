@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useAtom } from "jotai";
-import { favouritesAtom, searchHistoryAtom } from "@/lib/store";
+import { favouritesAtom, searchHistoryAtom } from "@/store";
 import { authenticateUser } from "@/lib/authenticate";
 import { getFavourites, getHistory } from "@/lib/userData";
 import Alert from "@/components/Alert";

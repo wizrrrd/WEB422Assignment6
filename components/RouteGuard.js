@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAtom } from 'jotai';
 import { favouritesAtom, searchHistoryAtom } from '@/store';
-import { getFavourites, getHistory } from '@/userData'; 
+import { getFavourites, getHistory } from '@/lib/userData'; 
 
 const PUBLIC_PATHS = ['/login', '/register'];
 

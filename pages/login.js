@@ -44,7 +44,6 @@ export default function Login() {
       <Card.Body>
         <br></br>
         <h2>Login Page</h2>
-        <p>Enter login credentials here:</p>
         {warning && <Alert variant="danger">{warning}</Alert>}
 
         <Form onSubmit={handleSubmit}>

@@ -40,7 +40,7 @@ export default function Login() {
   };
 
   return (
-    <Card bg="light">
+    <Card bg="secondary">
       <Card.Body>
         <br></br>
         <h2>Login Page</h2>

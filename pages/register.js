@@ -26,7 +26,7 @@ export default function Register() {
   };
 
   return (
-    <Card bg="light">
+    <Card bg="secondary">
       <Card.Body>
         <h2>Register Here</h2>
         {warning && <Alert variant="danger">{warning}</Alert>}

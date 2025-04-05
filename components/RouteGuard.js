@@ -15,40 +15,39 @@ export default function RouteGuard({ children }) {
 
   async function updateAtoms() {
     try {
+      console.log("[RouteGuard] Updating atoms...");
       const favs = await getFavourites();
       const history = await getHistory();
       setFavouritesList(favs);
       setSearchHistory(history);
     } catch (err) {
-      console.error('Failed to update atoms:', err);
-    }
-  }
-
-  function authCheck(url) {
-    const path = url.split('?')[0];
-    const isPublic = PUBLIC_PATHS.includes(path);
-
-    if (!isAuthenticated() && !isPublic) {
-      setAuthorized(false);
-      router.push('/login');
-    } else {
-      setAuthorized(true);
+      console.error('[RouteGuard] Failed to update atoms:', err);
     }
   }
 
   useEffect(() => {
-    setTimeout(() => {
-      authCheck(router.asPath);
-      if (isAuthenticated()) {
-        updateAtoms(); 
-      }
-    }, 100); 
+    const checkAuth = async () => {
+      const isPublic = PUBLIC_PATHS.includes(router.pathname);
 
-    router.events.on('routeChangeComplete', authCheck);
-    return () => {
-      router.events.off('routeChangeComplete', authCheck);
+      if (!isAuthenticated() && !isPublic) {
+        console.log('[RouteGuard] Not authenticated. Redirecting to /login');
+        setAuthorized(false);
+        router.push('/login');
+      } else {
+        if (isAuthenticated()) {
+          await updateAtoms();
+        }
+        setAuthorized(true);
+      }
     };
-  }, []);
+
+    checkAuth();
+
+    router.events.on('routeChangeComplete', checkAuth);
+    return () => {
+      router.events.off('routeChangeComplete', checkAuth);
+    };
+  }, [router.pathname]);
 
   return authorized ? children : null;
 }

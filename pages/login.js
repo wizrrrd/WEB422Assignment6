@@ -1,69 +1,78 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { useAtom } from "jotai";
-import { favouritesAtom, searchHistoryAtom } from "@/store";
 import { authenticateUser } from "@/lib/authenticate";
 import { getFavourites, getHistory } from "@/lib/userData";
-import Alert from "@/components/alert";
+import { useAtom } from "jotai";
+import { favouritesAtom, searchHistoryAtom } from "@/store";
+import { Card, Form, Button, Alert } from "react-bootstrap";
 
 export default function Login() {
+  const router = useRouter();
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const [warning, setWarning] = useState(null);
+
   const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
   const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);
-  const router = useRouter();
 
+  
   async function updateAtoms() {
+    console.log("[Login] Updating favourites and history atoms...");
     setFavouritesList(await getFavourites());
     setSearchHistory(await getHistory());
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    try {
+      console.log("[Login] Attempting login...");
+      const success = await authenticateUser(user, password);
 
-    const res = await authenticateUser(user, password);
-    if (res) {
-      await updateAtoms();
-      router.push("/favourites");
-    } else {
-      setError("Invalid username or password");
+      if (success) {
+        console.log("[Login] Login successful. Redirecting to /favourites");
+        await updateAtoms();
+        router.push("/favourites");
+      }
+    } catch (err) {
+      console.error("[Login] Login failed:", err.message);
+      setWarning("Invalid username or password.");
     }
   };
 
   return (
-    <div className="container">
-      <div className="card">
+    <Card bg="light">
+      <Card.Body>
         <br></br>
         <h2>Login Page</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Username</label>
-            <input
+        <p>Enter login credentials here:</p>
+        {warning && <Alert variant="danger">{warning}</Alert>}
+
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-3">
+            <Form.Label>User Name</Form.Label>
+            <Form.Control
               type="text"
-              className="form-control"
               value={user}
               onChange={(e) => setUser(e.target.value)}
               required
             />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Password</Form.Label>
+            <Form.Control
               type="password"
-              className="form-control"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </div>
-          {error && <Alert message={error} />}
-          <button type="submit" className="btn btn-primary">
+          </Form.Group>
+
+          <Button variant="primary" type="submit">
             Login
-          </button>
-        </form>
-      </div>
-    </div>
+          </Button>
+        </Form>
+      </Card.Body>
+    </Card>
   );
 }

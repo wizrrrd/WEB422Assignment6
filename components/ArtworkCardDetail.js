@@ -1,82 +1,83 @@
-import useSWR from 'swr';
-import Image from 'next/image';
-import Card from 'react-bootstrap/Card';
-import Button from 'react-bootstrap/Button';
 import { useAtom } from 'jotai';
-import { favouritesAtom } from '@/store';
-import { addToFavourites, removeFromFavourites } from '@/lib/userData';
+import { favouritesAtom } from '../store'; 
 import { useState, useEffect } from 'react';
-import { readToken } from '@/lib/authenticate';
+import { addToFavourites, removeFromFavourites } from '@/lib/userData';
+import useSWR from 'swr';
+import Error from 'next/error';
+import { Card, Button } from 'react-bootstrap';
+
+const fetcher = (url) => fetch(url).then((res) => res.json());
 
 export default function ArtworkCardDetail({ objectID }) {
-  const { data, error } = useSWR(
-    `https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectID}`
-  );
-  const [favourites, setFavourites] = useAtom(favouritesAtom);
+  const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
   const [showAdded, setShowAdded] = useState(false);
-  const [isAuth, setIsAuth] = useState(false);
+
+  const { data, error } = useSWR(
+    objectID ? `https://collectionapi.metmuseum.org/public/collection/v1/objects/${objectID}` : null,
+    fetcher
+  );
 
   useEffect(() => {
-    const token = readToken();
-    setIsAuth(!!token);
-  }, []);
+    setShowAdded(favouritesList?.includes(objectID));
+  }, [favouritesList, objectID]);
 
-  useEffect(() => {
-    setShowAdded(favourites?.includes(objectID));
-  }, [favourites]);
-
-  if (error) return <div>Error loading artwork.</div>;
-  if (!data) return <div>Loading...</div>;
-
-  const toggleFavourite = async () => {
-    if (!isAuth) {
-      alert('Please login to manage favourites.');
-      return;
-    }
+  async function favouritesClicked() {
+    console.log("Favourite clicked. Current state:", showAdded);
+    console.log("Current objectID:", objectID);
 
     if (showAdded) {
-      const updatedFavourites = await removeFromFavourites(objectID);
-      setFavourites(updatedFavourites);
+      try {
+        const updatedList = await removeFromFavourites(objectID);
+        console.log("Favourites after removal:", updatedList);
+        setFavouritesList(updatedList);
+      } catch (err) {
+        console.error("Error removing favourite:", err);
+      }
     } else {
-      const updatedFavourites = await addToFavourites(objectID);
-      setFavourites(updatedFavourites);
+      try {
+        const updatedList = await addToFavourites(objectID);
+        console.log("Favourites after addition:", updatedList);
+        setFavouritesList(updatedList);
+      } catch (err) {
+        console.error("Error adding favourite:", err);
+      }
     }
-  };
+  }
+
+  if (error) return <Error statusCode={404} />;
+  if (!data) return null;
 
   return (
-    <Card className="shadow-lg">
-      <Image
-        src={data.primaryImage || '/placeholder.png'}
-        alt={data.title || 'Artwork'}
-        width={500}
-        height={500}
-        className="card-img-top"
-      />
+    <Card>
+      {data.primaryImage && <Card.Img variant="top" src={data.primaryImage} />}
       <Card.Body>
         <Card.Title>{data.title || 'N/A'}</Card.Title>
         <Card.Text>
-          <strong>Artist:</strong> {data.artistDisplayName || 'N/A'} <br />
-          <strong>Date:</strong> {data.objectDate || 'N/A'} <br />
-          <strong>Medium:</strong> {data.medium || 'N/A'} <br />
-          <strong>Dimensions:</strong> {data.dimensions || 'N/A'} <br />
-          <strong>Credit Line:</strong> {data.creditLine || 'N/A'}
+          {data.objectDate || 'N/A'} <br />
+          {data.classification || 'N/A'} <br />
+          {data.medium || 'N/A'}
+          <br /><br />
+          {data.artistDisplayName ? (
+            <>
+              {data.artistDisplayName} -{' '}
+              <a href={data.artistWikidata_URL} target="_blank" rel="noreferrer">
+                wiki
+              </a>
+            </>
+          ) : (
+            'N/A'
+          )}
+          <br />
+          {data.creditLine || 'N/A'}
+          <br />
+          {data.dimensions || 'N/A'}
         </Card.Text>
-        {data.artistWikidata_URL && (
-          <a
-            href={data.artistWikidata_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn more about the artist
-          </a>
-        )}
-        <br />
+
         <Button
-          variant={showAdded ? 'danger' : 'success'}
-          onClick={toggleFavourite}
-          disabled={!isAuth}
+          variant={showAdded ? 'primary' : 'outline-primary'}
+          onClick={favouritesClicked}
         >
-          {showAdded ? 'Remove from Favourites' : 'Add to Favourites'}
+          {showAdded ? '+ Favourite (added)' : '+ Favourite'}
         </Button>
       </Card.Body>
     </Card>

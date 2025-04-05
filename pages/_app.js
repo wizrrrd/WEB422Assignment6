@@ -9,29 +9,36 @@
 *  Name: Aditi Sharma  Student ID: __145646238__ Date: ____14 Feb 2025_____
 *
 ********************************************************************************/
-
-import RouteGuard from '@/components/RouteGuard';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import '../styles/globals.css';
 import Layout from '../components/Layout';
+import RouteGuard from '../components/RouteGuard'; 
 import { SWRConfig } from 'swr';
-
-const fetcher = async (...args) => {
-  const response = await fetch(...args);
-  if (!response.ok) {
-    throw new Error(`Request failed with status: ${response.status}`);
-  }
-  return response.json();
-};
 
 export default function App({ Component, pageProps }) {
   return (
-    <SWRConfig value={{ fetcher }}>
-      <RouteGuard>
+    <RouteGuard> {}
+      <SWRConfig
+        value={{
+          fetcher: async (url) => {
+            const res = await fetch(url);
+            if (!res.ok) {
+              const error = new Error('An error occurred while fetching the data.');
+              try {
+                error.info = await res.json();
+              } catch {
+                error.info = { message: 'Invalid JSON response' };
+              }
+              error.status = res.status;
+              throw error;
+            }
+            return res.json();
+          },
+        }}
+      >
         <Layout>
           <Component {...pageProps} />
         </Layout>
-      </RouteGuard>
-    </SWRConfig>
+      </SWRConfig>
+    </RouteGuard>
   );
 }

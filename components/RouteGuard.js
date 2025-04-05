@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useEffect, useState } from 'react';
+import { isAuthenticated } from '@/lib/authenticate';
 import { useAtom } from 'jotai';
 import { favouritesAtom, searchHistoryAtom } from '@/store';
 import { getFavourites, getHistory } from '@/lib/userData';
@@ -7,25 +8,47 @@ import { getFavourites, getHistory } from '@/lib/userData';
 const PUBLIC_PATHS = ['/login', '/register'];
 
 export default function RouteGuard({ children }) {
-  const [favourites, setFavourites] = useAtom(favouritesAtom);
-  const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);
   const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
+  const [, setFavouritesList] = useAtom(favouritesAtom);
+  const [, setSearchHistory] = useAtom(searchHistoryAtom);
 
-  const updateAtoms = async () => {
-    const favouritesData = await getFavourites();
-    const historyData = await getHistory();
-    setFavourites(favouritesData);
-    setSearchHistory(historyData);
-  };
+  async function updateAtoms() {
+    try {
+      const favs = await getFavourites();
+      const history = await getHistory();
+      setFavouritesList(favs);
+      setSearchHistory(history);
+    } catch (err) {
+      console.error('Failed to update atoms:', err);
+    }
+  }
+
+  function authCheck(url) {
+    const path = url.split('?')[0];
+    const isPublic = PUBLIC_PATHS.includes(path);
+
+    if (!isAuthenticated() && !isPublic) {
+      setAuthorized(false);
+      router.push('/login');
+    } else {
+      setAuthorized(true);
+    }
+  }
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token && !PUBLIC_PATHS.includes(router.pathname)) {
-      router.push('/login');
-    } else if (token) {
-      updateAtoms();
-    }
-  }, [router]);
+    setTimeout(() => {
+      authCheck(router.asPath);
+      if (isAuthenticated()) {
+        updateAtoms(); 
+      }
+    }, 100); 
 
-  return <>{children}</>;
+    router.events.on('routeChangeComplete', authCheck);
+    return () => {
+      router.events.off('routeChangeComplete', authCheck);
+    };
+  }, []);
+
+  return authorized ? children : null;
 }

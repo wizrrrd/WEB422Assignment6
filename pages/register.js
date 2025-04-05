@@ -1,74 +1,66 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { registerUser } from "@/lib/authenticate";
-import Alert from "@/components/alert";
+import { Card, Form, Button, Alert } from "react-bootstrap";
 
 export default function Register() {
+  const router = useRouter();
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
-  const [error, setError] = useState(null);
-  const router = useRouter();
+  const [warning, setWarning] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-
     if (password !== password2) {
-      setError("Passwords do not match");
+      setWarning("Passwords do not match");
       return;
     }
 
-    const res = await registerUser(user, password, password2);
-    if (res) {
+    try {
+      await registerUser(user, password, password2);
       router.push("/login");
-    } else {
-      setError("Registration failed. Please try again.");
+    } catch (err) {
+      setWarning(err.message);
     }
   };
 
   return (
-    <div className="container">
-      <div className="card">
-        <br></br>
+    <Card bg="light">
+      <Card.Body>
         <h2>Register Page</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Username</label>
-            <input
+        {warning && <Alert variant="danger">{warning}</Alert>}
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-3">
+            <Form.Label>User Name</Form.Label>
+            <Form.Control
               type="text"
-              className="form-control"
               value={user}
               onChange={(e) => setUser(e.target.value)}
               required
             />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Password</Form.Label>
+            <Form.Control
               type="password"
-              className="form-control"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </div>
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Confirm Password</Form.Label>
+            <Form.Control
               type="password"
-              className="form-control"
               value={password2}
               onChange={(e) => setPassword2(e.target.value)}
               required
             />
-          </div>
-          {error && <Alert message={error} />}
-          <button type="submit" className="btn btn-primary">
-            Register
-          </button>
-        </form>
-      </div>
-    </div>
+          </Form.Group>
+          <Button variant="primary" type="submit">Register</Button>
+        </Form>
+      </Card.Body>
+    </Card>
   );
 }

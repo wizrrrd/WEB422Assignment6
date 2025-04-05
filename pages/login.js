@@ -4,7 +4,7 @@ import { useAtom } from "jotai";
 import { favouritesAtom, searchHistoryAtom } from "@/store";
 import { authenticateUser } from "@/lib/authenticate";
 import { getFavourites, getHistory } from "@/lib/userData";
-import Alert from "@/components/Alert";
+import Alert from "@/components/alert";
 
 export default function Login() {
   const [user, setUser] = useState("");

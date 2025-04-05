@@ -6,7 +6,7 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import { useAtom } from 'jotai';
 import { searchHistoryAtom } from '@/store';
-import { addToHistory } from '@/userData';  
+import { addToHistory } from '@/lib/userData';  
 
 export default function SearchPage() {
   const { register, handleSubmit } = useForm();

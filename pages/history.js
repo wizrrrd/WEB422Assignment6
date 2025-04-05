@@ -2,7 +2,7 @@ import { useAtom } from 'jotai';
 import { searchHistoryAtom } from '@/store';
 import { useRouter } from 'next/router';
 import { Button, ListGroup, Container } from 'react-bootstrap';
-import { removeFromHistory } from '@/userData';  // Import the function
+import { removeFromHistory } from '@/lib/userData';  // Import the function
 
 export default function HistoryPage() {
   const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);

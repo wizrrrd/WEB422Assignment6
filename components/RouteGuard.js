@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAtom } from 'jotai';
 import { favouritesAtom, searchHistoryAtom } from '@/store';
-import { getFavourites, getHistory } from '@/lib/userData'; 
+import { getFavourites, getHistory } from '@/lib/userData';
 
 const PUBLIC_PATHS = ['/login', '/register'];
 
@@ -19,9 +19,10 @@ export default function RouteGuard({ children }) {
   };
 
   useEffect(() => {
-    if (!localStorage.getItem('token') && !PUBLIC_PATHS.includes(router.pathname)) {
+    const token = localStorage.getItem('token');
+    if (!token && !PUBLIC_PATHS.includes(router.pathname)) {
       router.push('/login');
-    } else if (localStorage.getItem('token')) {
+    } else if (token) {
       updateAtoms();
     }
   }, [router]);

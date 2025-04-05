@@ -1,4 +1,4 @@
-/*import { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import { authenticateUser } from "@/lib/authenticate";
 import { getFavourites, getHistory } from "@/lib/userData";
@@ -74,59 +74,4 @@ export default function Login() {
       </Card.Body>
     </Card>
   );
-}
-*/
-
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import { isAuthenticated } from '@/lib/authenticate';
-import { useAtom } from 'jotai';
-import { favouritesAtom, searchHistoryAtom } from '@/store';
-import { getFavourites, getHistory } from '@/lib/userData';
-
-const PUBLIC_PATHS = ['/login', '/register'];
-
-export default function RouteGuard({ children }) {
-  const router = useRouter();
-  const [authorized, setAuthorized] = useState(false);
-  const [, setFavouritesList] = useAtom(favouritesAtom);
-  const [, setSearchHistory] = useAtom(searchHistoryAtom);
-
-  async function updateAtoms() {
-    try {
-      const favs = await getFavourites();
-      const history = await getHistory();
-      setFavouritesList(favs);
-      setSearchHistory(history);
-    } catch (err) {
-      console.error('[RouteGuard] Failed to update atoms:', err);
-    }
-  }
-
-  async function checkAuth(url) {
-    const path = url.split('?')[0];
-    const isPublic = PUBLIC_PATHS.includes(path);
-
-    if (!isAuthenticated() && !isPublic) {
-      console.log('[RouteGuard] Not authenticated. Redirecting to /login');
-      setAuthorized(false);
-      router.push('/login');
-    } else {
-      if (isAuthenticated()) {
-        await updateAtoms();
-      }
-      setAuthorized(true);
-    }
-  }
-
-  useEffect(() => {
-    checkAuth(router.asPath);
-
-    router.events.on('routeChangeComplete', checkAuth);
-    return () => {
-      router.events.off('routeChangeComplete', checkAuth);
-    };
-  }, []);
-
-  return authorized || PUBLIC_PATHS.includes(router.pathname) ? children : null;
 }

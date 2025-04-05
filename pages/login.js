@@ -12,14 +12,19 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [warning, setWarning] = useState(null);
 
-  const [favouritesList, setFavouritesList] = useAtom(favouritesAtom);
-  const [searchHistory, setSearchHistory] = useAtom(searchHistoryAtom);
+  const [, setFavouritesList] = useAtom(favouritesAtom);
+  const [, setSearchHistory] = useAtom(searchHistoryAtom);
 
-  
   async function updateAtoms() {
-    console.log("[Login] Updating favourites and history atoms...");
-    setFavouritesList(await getFavourites());
-    setSearchHistory(await getHistory());
+    try {
+      console.log("[Login] Updating favourites and history atoms...");
+      const favs = await getFavourites();
+      const history = await getHistory();
+      setFavouritesList(favs);
+      setSearchHistory(history);
+    } catch (err) {
+      console.error("[Login] Failed to update atoms:", err);
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -29,7 +34,7 @@ export default function Login() {
       const success = await authenticateUser(user, password);
 
       if (success) {
-        console.log("[Login] Login successful. Redirecting to /favourites");
+        console.log("[Login] Login successful.");
         await updateAtoms();
         router.push("/favourites");
       }
@@ -40,10 +45,9 @@ export default function Login() {
   };
 
   return (
-    <Card bg="secondary">
+    <Card bg="light" className="p-4">
       <Card.Body>
-        <br></br>
-        <h2>Login Page</h2>
+        <h2 className="mb-4">Login</h2>
         {warning && <Alert variant="danger">{warning}</Alert>}
 
         <Form onSubmit={handleSubmit}>
@@ -57,7 +61,7 @@ export default function Login() {
             />
           </Form.Group>
 
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-4">
             <Form.Label>Password</Form.Label>
             <Form.Control
               type="password"
@@ -67,7 +71,7 @@ export default function Login() {
             />
           </Form.Group>
 
-          <Button variant="primary" type="submit">
+          <Button variant="primary" type="submit" className="w-100">
             Login
           </Button>
         </Form>

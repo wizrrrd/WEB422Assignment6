@@ -29,9 +29,10 @@ export default function Login() {
       const success = await authenticateUser(user, password);
 
       if (success) {
+        router.push("/favourites");
         console.log("[Login] Login successful. Redirecting to /favourites");
         await updateAtoms();
-        router.push("/favourites");
+        //router.push("/favourites");
       }
     } catch (err) {
       console.error("[Login] Login failed:", err.message);

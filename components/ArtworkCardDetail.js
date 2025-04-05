@@ -4,7 +4,9 @@ import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import { useAtom } from 'jotai';
 import { favouritesAtom } from '@/store';
-import { addToFavourites, removeFromFavourites } from '@/lib/userData'; // Importing the add/remove functions from userdata.js
+import { addToFavourites, removeFromFavourites } from '@/lib/userData';
+import { useState, useEffect } from 'react';
+import { readToken } from '@/lib/authenticate';
 
 export default function ArtworkCardDetail({ objectID }) {
   const { data, error } = useSWR(
@@ -12,6 +14,12 @@ export default function ArtworkCardDetail({ objectID }) {
   );
   const [favourites, setFavourites] = useAtom(favouritesAtom);
   const [showAdded, setShowAdded] = useState(false);
+  const [isAuth, setIsAuth] = useState(false);
+
+  useEffect(() => {
+    const token = readToken();
+    setIsAuth(!!token);
+  }, []);
 
   useEffect(() => {
     setShowAdded(favourites?.includes(objectID));
@@ -21,12 +29,15 @@ export default function ArtworkCardDetail({ objectID }) {
   if (!data) return <div>Loading...</div>;
 
   const toggleFavourite = async () => {
+    if (!isAuth) {
+      alert('Please login to manage favourites.');
+      return;
+    }
+
     if (showAdded) {
-      // Remove favourites
       const updatedFavourites = await removeFromFavourites(objectID);
       setFavourites(updatedFavourites);
     } else {
-      // Add favourites
       const updatedFavourites = await addToFavourites(objectID);
       setFavourites(updatedFavourites);
     }
@@ -60,7 +71,11 @@ export default function ArtworkCardDetail({ objectID }) {
           </a>
         )}
         <br />
-        <Button variant={showAdded ? 'danger' : 'success'} onClick={toggleFavourite}>
+        <Button
+          variant={showAdded ? 'danger' : 'success'}
+          onClick={toggleFavourite}
+          disabled={!isAuth}
+        >
           {showAdded ? 'Remove from Favourites' : 'Add to Favourites'}
         </Button>
       </Card.Body>

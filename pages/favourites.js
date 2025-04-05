@@ -1,13 +1,26 @@
+import { useEffect } from 'react';
 import { useAtom } from 'jotai';
 import { favouritesAtom } from '@/store';
+import { getFavourites } from '@/lib/userData';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import ArtworkCardDetail from '@/components/ArtworkCardDetail';
 
 export default function FavouritesPage() {
-  const [favourites] = useAtom(favouritesAtom);
+  const [favourites, setFavourites] = useAtom(favouritesAtom);
 
-  if (!favourites) return null; 
+  useEffect(() => {
+    async function fetchFavourites() {
+      try {
+        const favs = await getFavourites();
+        setFavourites(favs);
+      } catch (err) {
+        console.error('Failed to fetch favourites:', err);
+      }
+    }
+
+    fetchFavourites();
+  }, [setFavourites]);
 
   return (
     <div className="mt-4">
